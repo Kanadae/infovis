@@ -15,6 +15,12 @@ class BarChart {
             "accepted_count": d => +d.accepted_count
         };
 
+        this.xLabel = {
+         "difficulty_asc": "정답률",
+          "try_count":      "시도수",
+          "accepted_count": "정답수"
+        };
+
         this.svg = d3.select(this.selector)
             .append("svg")
             .attr("width", this.width + this.margin.left + this.margin.right)
@@ -43,6 +49,7 @@ class BarChart {
     async update(selectedTag, xAttribute) {
         const data = await d3.csv(this.dataPath, d3.autoType);
         const xAccessor = this.xEncodingMap[xAttribute];
+        const xLabel    = this.xLabelMap[xAttribute] || xAttribute;
         const filtered = data
             .filter(d => {
                 const tags = d.tag.split(/\s*,\s*/);
@@ -71,7 +78,7 @@ class BarChart {
             .attr("width", 0)
             .style("fill-opacity", 0)
             .remove();
-
+        
         const enterBars = bars.enter()
             .append("rect")
             .attr("class", "bar")
@@ -80,7 +87,8 @@ class BarChart {
             .attr("height", yScale.bandwidth())
             .attr("width", 0)
             .attr("fill", "#69b3a2");
-
+        enterBars.append("title")
+            .text(d => `${xLabel}: ${xAccessor(d)}`);
         enterBars.transition()
             .duration(800)
             .attr("width", d => xScale(xAccessor(d)));
@@ -90,6 +98,9 @@ class BarChart {
             .attr("y", d => yScale(`${d.problem_id} ${d.name}`))
             .attr("height", yScale.bandwidth())
             .attr("width", d => xScale(xAccessor(d)));
+            .selection()
+            .selectAll("title")
+            .text(d => `${xLabel}: ${xAccessor(d)}`);
 
         this.svg.selectAll(".x-axis, .y-axis").remove();
 
